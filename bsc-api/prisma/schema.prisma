@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String   @id @default(cuid())
+  username String   @unique
+  password String
+  role     String   @default("user")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Perspective {
+  id        String    @id @default(cuid())
+  name      String
+  objective String
+  weightage Float
+  order     Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  projects Project[]
+
+  @@map("perspectives")
+}
+
+model Project {
+  id           String   @id @default(cuid())
+  name         String
+  weightage    Float
+  strategy     String
+  detail       String
+  order        Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  perspectiveId String     @map("perspective_id")
+  perspective   Perspective @relation(fields: [perspectiveId], references: [id], onDelete: Cascade)
+
+  activities Activity[]
+
+  @@map("projects")
+}
+
+model Activity {
+  id                  String   @id @default(cuid())
+  name                String
+  weightage           Float
+  progress            Float    @default(0)
+  responsibleProcess  String   @map("responsible_process")
+  complianceDate      String   @map("compliance_date")
+  realizedActivities  String   @default("") @map("realized_activities")
+  order               Int      @default(0)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
