@@ -9,8 +9,15 @@ export const prisma = new PrismaClient();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  credentials: true,
+}));
 app.use(express.json());
+
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/perspectives", perspectiveRoutes);
