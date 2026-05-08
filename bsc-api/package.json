@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "cd ../bsc-shared && npm install --include=dev && npm run build && cd ../bsc-api && prisma generate && tsc",
+    "build": "cd ../bsc-shared && npm install --include=dev && npm run build && cd ../bsc-api && npm install --include=dev && prisma generate && tsc",
     "start": "npx prisma migrate deploy && node dist/server.js",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
