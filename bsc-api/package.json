@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "cd ../bsc-shared && npm install && npm run build && cd ../bsc-api && prisma generate && tsc",
-    "start": "node node_modules/.bin/prisma migrate deploy && tsx prisma/seed.ts && node dist/server.js",
+    "start": "node node_modules/.bin/prisma migrate deploy && node node_modules/.bin/tsx prisma/seed.ts && node dist/server.js",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
@@ -27,11 +27,9 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "prisma": "^6.5.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "zod": "^3.24.0"
-  },
-  "devDependencies": {
-    "tsx": "^4.19.0"
   },
   "devDependencies": {
     "ts-node-dev": "^2.0.0"
