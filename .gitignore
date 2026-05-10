@@ -5,3 +5,5 @@ dist/
 !.env.example
 testsprite_tests/
 *.log
+debugging_backend.md
+testingfronted.md
