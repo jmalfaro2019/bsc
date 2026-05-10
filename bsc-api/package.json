@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "cd ../bsc-shared && npm install --include=dev && npm run build && cd ../bsc-api && npm install --include=dev && prisma generate && tsc",
+    "build": "cd ../bsc-shared && npm install && npm run build && cd ../bsc-api && prisma generate && tsc",
     "start": "npx prisma migrate deploy && node dist/server.js",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
@@ -15,23 +15,23 @@
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.12.0",
     "bcrypt": "^5.1.1",
     "bsc-shared": "file:../bsc-shared",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "prisma": "^6.5.0",
+    "typescript": "^5.7.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
-    "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^22.12.0",
-    "prisma": "^6.5.0",
     "ts-node-dev": "^2.0.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "tsx": "^4.19.0"
   }
 }
