@@ -2,10 +2,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPerspectives } from "../services/bscService";
 import type { BSCData } from "../types/bsc";
 
-export function usePerspectives() {
+export function usePerspectives(snapshotId?: string) {
   return useQuery<BSCData>({
-    queryKey: ["perspectives"],
-    queryFn: fetchPerspectives,
+    queryKey: ["perspectives", snapshotId],
+    queryFn: () => fetchPerspectives(snapshotId),
   });
 }
 

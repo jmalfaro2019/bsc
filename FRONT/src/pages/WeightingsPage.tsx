@@ -1,5 +1,7 @@
 import { useState } from "react";
 import PageMeta from "../components/common/PageMeta";
+import SnapshotSelector from "../components/common/SnapshotSelector";
+import SnapshotBanner from "../components/common/SnapshotBanner";
 import { ChevronDownIcon } from "../icons";
 import { usePerspectives } from "../hooks/usePerspectives";
 import type { Perspective, Project } from "../types/bsc";
@@ -16,7 +18,7 @@ function WeightBadge({ value, perspectiveId }: { value: number; perspectiveId: s
 
 function Cell({ value }: { value: string }) {
   if (!value || value === "-") {
-    return <span className="text-gray-300 dark:text-gray-600 italic">—</span>;
+    return <span className="text-gray-300 dark:text-gray-600 italic">&mdash;</span>;
   }
   return <span>{value}</span>;
 }
@@ -129,7 +131,8 @@ function LineSection({ line }: { line: Perspective }) {
 }
 
 export default function WeightingsPage() {
-  const { data, isLoading, error } = usePerspectives();
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null);
+  const { data, isLoading, error } = usePerspectives(selectedSnapshotId ?? undefined);
 
   if (isLoading) {
     return (
@@ -160,14 +163,22 @@ export default function WeightingsPage() {
       />
 
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Tabla de Ponderaciones
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {data.perspectives.length} perspectivas · {totalProjects} proyectos · {totalActivities} actividades
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Tabla de Ponderaciones
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {data.perspectives.length} perspectivas · {totalProjects} proyectos · {totalActivities} actividades
+            </p>
+          </div>
+          <SnapshotSelector
+            selectedSnapshotId={selectedSnapshotId}
+            onSnapshotChange={setSelectedSnapshotId}
+          />
         </div>
+
+        <SnapshotBanner isViewingSnapshot={!!selectedSnapshotId} />
 
         <div className="flex flex-col gap-5">
           {data.perspectives.map((line) => (

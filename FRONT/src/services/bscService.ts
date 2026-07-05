@@ -1,10 +1,14 @@
 import api from "./api";
-import type { BSCData, Perspective, Project, Activity } from "../types/bsc";
+import type { BSCData, Perspective, Project, Activity, Snapshot } from "../types/bsc";
 
 const PERSPECTIVES_KEY = "/perspectives";
+const SNAPSHOTS_KEY = "/snapshots";
 
-export async function fetchPerspectives(): Promise<BSCData> {
-  const { data } = await api.get<Perspective[]>(PERSPECTIVES_KEY);
+export async function fetchPerspectives(snapshotId?: string): Promise<BSCData> {
+  const url = snapshotId
+    ? `${PERSPECTIVES_KEY}?snapshotId=${snapshotId}`
+    : PERSPECTIVES_KEY;
+  const { data } = await api.get<Perspective[]>(url);
   return { perspectives: data };
 }
 
@@ -121,5 +125,31 @@ export async function batchUpdateProgress(
   const { data } = await api.patch(`${PERSPECTIVES_KEY}/batch-progress`, {
     updates,
   });
+  return data;
+}
+
+export async function fetchSnapshots(): Promise<Snapshot[]> {
+  const { data } = await api.get<Snapshot[]>(SNAPSHOTS_KEY);
+  return data;
+}
+
+export async function createSnapshot(label?: string): Promise<Snapshot> {
+  const { data } = await api.post<Snapshot>(SNAPSHOTS_KEY, { label });
+  return data;
+}
+
+export async function deleteSnapshot(id: string): Promise<void> {
+  await api.delete(`${SNAPSHOTS_KEY}/${id}`);
+}
+
+export interface ProgressTrendPoint {
+  id: string;
+  label: string | null;
+  date: string;
+  avgProgress: number;
+}
+
+export async function fetchProgressTrend(): Promise<ProgressTrendPoint[]> {
+  const { data } = await api.get<ProgressTrendPoint[]>(`${SNAPSHOTS_KEY}/progress-trend`);
   return data;
 }

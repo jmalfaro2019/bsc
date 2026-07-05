@@ -26,14 +26,25 @@ router.patch(
   async (req: AuthRequest, res: Response) => {
     const { updates } = req.body;
     try {
-      const results = await prisma.$transaction(
-        updates.map((u: { activityId: string; progress: number }) =>
-          prisma.activity.update({
+      const results = await prisma.$transaction(async (tx) => {
+        const updated = [];
+        for (const u of updates as { activityId: string; progress: number }[]) {
+          const activity = await tx.activity.update({
             where: { id: u.activityId },
             data: { progress: u.progress },
-          }),
-        ),
-      );
+          });
+          await tx.progressRecord.create({
+            data: {
+              activityId: u.activityId,
+              progress: u.progress,
+              recordedAt: new Date(),
+              snapshotId: null,
+            },
+          });
+          updated.push(activity);
+        }
+        return updated;
+      });
       res.json({ updated: results });
     } catch {
       res.status(400).json({ error: "One or more activities not found" });
@@ -47,7 +58,53 @@ function getParam(req: AuthRequest, key: string): string {
 }
 
 // GET /api/perspectives — list all with nested projects and activities
-router.get("/", async (_req: AuthRequest, res: Response) => {
+// Optional ?snapshotId=xxx to reconstruct progress from a snapshot
+router.get("/", async (req: AuthRequest, res: Response) => {
+  const snapshotId = req.query.snapshotId as string | undefined;
+
+  if (snapshotId) {
+    const snapshot = await prisma.snapshot.findUnique({
+      where: { id: snapshotId },
+    });
+    if (!snapshot) {
+      res.status(404).json({ error: "Snapshot not found" });
+      return;
+    }
+
+    const records = await prisma.progressRecord.findMany({
+      where: { snapshotId },
+    });
+    const progressMap = new Map(
+      records.map((r) => [r.activityId, r.progress]),
+    );
+
+    const perspectives = await prisma.perspective.findMany({
+      orderBy: { order: "asc" },
+      include: {
+        projects: {
+          orderBy: { order: "asc" },
+          include: { activities: { orderBy: { order: "asc" } } },
+        },
+      },
+    });
+
+    const result = perspectives.map((p) => ({
+      ...p,
+      projects: p.projects.map((pr) => ({
+        ...pr,
+        activities: pr.activities.map((a) => ({
+          ...a,
+          progress: progressMap.has(a.id)
+            ? progressMap.get(a.id)!
+            : a.progress,
+        })),
+      })),
+    }));
+
+    res.json(result);
+    return;
+  }
+
   const perspectives = await prisma.perspective.findMany({
     orderBy: { order: "asc" },
     include: {
@@ -254,9 +311,21 @@ router.patch(
   async (req: AuthRequest, res: Response) => {
     try {
       const aid = getParam(req, "aid");
-      const activity = await prisma.activity.update({
-        where: { id: aid },
-        data: { progress: req.body.progress },
+      const { progress } = req.body;
+      const activity = await prisma.$transaction(async (tx) => {
+        const updated = await tx.activity.update({
+          where: { id: aid },
+          data: { progress },
+        });
+        await tx.progressRecord.create({
+          data: {
+            activityId: aid,
+            progress,
+            recordedAt: new Date(),
+            snapshotId: null,
+          },
+        });
+        return updated;
       });
       res.json(activity);
     } catch {

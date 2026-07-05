@@ -95,6 +95,31 @@ async function main() {
     }
   }
 
+  // Create initial snapshot with current progress values
+  const existingSnapshots = await prisma.snapshot.count();
+  if (existingSnapshots === 0) {
+    const now = new Date();
+    const snapshot = await prisma.snapshot.create({
+      data: {
+        label: "Inicial",
+        date: now,
+      },
+    });
+
+    const activities = await prisma.activity.findMany();
+    if (activities.length > 0) {
+      await prisma.progressRecord.createMany({
+        data: activities.map((a) => ({
+          activityId: a.id,
+          progress: a.progress,
+          recordedAt: now,
+          snapshotId: snapshot.id,
+        })),
+      });
+    }
+    console.log("Created initial snapshot with progress records");
+  }
+
   console.log("Seeding complete!");
 }
 

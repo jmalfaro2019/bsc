@@ -23,7 +23,6 @@
     "apexcharts": "^4.1.0",
     "axios": "^1.15.2",
     "bsc-shared": "file:../bsc-shared",
-    "zod": "^3.24.0",
     "clsx": "^2.1.1",
     "flatpickr": "^4.6.13",
     "react": "^19.0.0",
@@ -34,8 +33,11 @@
     "react-dropzone": "^14.3.5",
     "react-helmet-async": "^2.0.5",
     "react-router": "^7.1.5",
+    "recharts": "^3.8.1",
     "swiper": "^11.2.3",
-    "tailwind-merge": "^3.0.1"
+    "tailwind-merge": "^3.0.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

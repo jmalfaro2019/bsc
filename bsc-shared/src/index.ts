@@ -73,3 +73,27 @@ export type CreatePerspective = z.infer<typeof createPerspectiveSchema>;
 export type ProgressUpdate = z.infer<typeof progressUpdateSchema>;
 export type BatchProgressUpdate = z.infer<typeof batchProgressUpdateSchema>;
 export type LoginRequest = z.infer<typeof loginSchema>;
+
+// Snapshot / ProgressRecord schemas
+export const snapshotSchema = z.object({
+  id: z.string(),
+  label: z.string().nullable(),
+  date: z.string().or(z.date()),
+  createdAt: z.string().or(z.date()),
+});
+
+export const createSnapshotSchema = z.object({
+  label: z.string().min(1).max(100).optional(),
+});
+
+export const progressRecordSchema = z.object({
+  id: z.string(),
+  activityId: z.string(),
+  progress: z.number().min(0).max(100),
+  recordedAt: z.string().or(z.date()),
+  snapshotId: z.string().nullable(),
+});
+
+export type Snapshot = z.infer<typeof snapshotSchema>;
+export type CreateSnapshot = z.infer<typeof createSnapshotSchema>;
+export type ProgressRecord = z.infer<typeof progressRecordSchema>;

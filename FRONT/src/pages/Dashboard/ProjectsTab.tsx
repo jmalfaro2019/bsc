@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router";
 import ComponentProjectsCard from "../../components/Cards/ComponentProjectsCard";
 import PageMeta from "../../components/common/PageMeta";
+import SnapshotSelector from "../../components/common/SnapshotSelector";
+import SnapshotBanner from "../../components/common/SnapshotBanner";
 import { ChevronDownIcon } from "../../icons";
 import { usePerspectives } from "../../hooks/usePerspectives";
 import type { Perspective } from "../../types/bsc";
@@ -77,7 +79,8 @@ const PerspectiveSection = ({ perspective, defaultExpanded = true }: { perspecti
 };
 
 export default function ProjectsTab() {
-  const { data, isLoading, error } = usePerspectives();
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null);
+  const { data, isLoading, error } = usePerspectives(selectedSnapshotId ?? undefined);
   const [searchParams] = useSearchParams();
   const expandId = searchParams.get("expand");
 
@@ -106,14 +109,22 @@ export default function ProjectsTab() {
       />
 
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Proyectos por Perspectiva
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {data.perspectives.length} perspectivas · {totalActivities} actividades en total
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Proyectos por Perspectiva
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {data.perspectives.length} perspectivas · {totalActivities} actividades en total
+            </p>
+          </div>
+          <SnapshotSelector
+            selectedSnapshotId={selectedSnapshotId}
+            onSnapshotChange={setSelectedSnapshotId}
+          />
         </div>
+
+        <SnapshotBanner isViewingSnapshot={!!selectedSnapshotId} />
 
         <div className="flex flex-col gap-5">
           {data.perspectives.map((perspective) => (

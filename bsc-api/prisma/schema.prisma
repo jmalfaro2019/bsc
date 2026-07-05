@@ -65,5 +65,33 @@ model Activity {
   projectId String  @map("project_id")
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  progressRecords ProgressRecord[]
+
   @@map("activities")
+}
+
+model ProgressRecord {
+  id          String   @id @default(cuid())
+  activityId  String
+  progress    Float
+  recordedAt  DateTime @default(now()) @map("recorded_at")
+  snapshotId  String?  @map("snapshot_id")
+
+  activity Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  snapshot Snapshot? @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+
+  @@index([activityId, recordedAt])
+  @@index([snapshotId])
+  @@map("progress_records")
+}
+
+model Snapshot {
+  id        String   @id @default(cuid())
+  label     String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  progressRecords ProgressRecord[]
+
+  @@map("snapshots")
 }

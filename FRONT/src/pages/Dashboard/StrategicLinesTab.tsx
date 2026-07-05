@@ -1,9 +1,17 @@
+import { useState } from "react";
+import PerspectivesDonutChart from "../../components/charts/PerspectivesDonutChart";
+import ProgressTrendChart from "../../components/charts/ProgressTrendChart";
 import StrategicCard from "../../components/Cards/StrategicCard";
 import PageMeta from "../../components/common/PageMeta";
+import SnapshotSelector from "../../components/common/SnapshotSelector";
+import SnapshotBanner from "../../components/common/SnapshotBanner";
 import { usePerspectives } from "../../hooks/usePerspectives";
+import { useProgressTrend } from "../../hooks/useSnapshots";
 
 export default function StrategicLinesTab() {
-  const { data, isLoading, error } = usePerspectives();
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null);
+  const { data, isLoading, error } = usePerspectives(selectedSnapshotId ?? undefined);
+  const { data: trendData } = useProgressTrend();
 
   if (isLoading) {
     return (
@@ -39,16 +47,7 @@ export default function StrategicLinesTab() {
     };
   });
 
-  const total = perspectives.length;
-  const complete = perspectives.filter((l) => l.progress === 100).length;
-  const avgProgress = Math.round(perspectives.reduce((a, p) => a + p.progress, 0) / (total || 1));
-  const totalProjects = data.perspectives.reduce((a, p) => a + p.projects.length, 0);
-
-  const progressColor = (p: number) => {
-    if (p >= 80) return "text-emerald-500";
-    if (p >= 50) return "text-amber-500";
-    return "text-red-500";
-  };
+  const avgProgress = Math.round(perspectives.reduce((a, p) => a + p.progress, 0) / (perspectives.length || 1));
 
   return (
     <>
@@ -58,50 +57,29 @@ export default function StrategicLinesTab() {
       />
 
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Perspectivas
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Perspectivas del Balanced Scorecard
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Perspectivas
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Perspectivas del Balanced Scorecard
+            </p>
+          </div>
+          <SnapshotSelector
+            selectedSnapshotId={selectedSnapshotId}
+            onSnapshotChange={setSelectedSnapshotId}
+          />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-8">
-          <div className="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">
-              Progreso General
-            </p>
-            <p className={`text-2xl font-bold tabular-nums tracking-tight ${progressColor(avgProgress)}`}>
-              {avgProgress}%
-            </p>
-          </div>
-          <div className="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">
-              Perspectivas
-            </p>
-            <p className="text-2xl font-bold tabular-nums tracking-tight text-gray-900 dark:text-white">
-              {total}
-              <span className="text-sm font-medium text-gray-400 ml-1.5">total</span>
-            </p>
-          </div>
-          <div className="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">
-              Proyectos
-            </p>
-            <p className="text-2xl font-bold tabular-nums tracking-tight text-gray-900 dark:text-white">
-              {totalProjects}
-              <span className="text-sm font-medium text-gray-400 ml-1.5">total</span>
-            </p>
-          </div>
-          <div className="rounded-xl border border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">
-              Completadas
-            </p>
-            <p className="text-2xl font-bold tabular-nums tracking-tight text-gray-900 dark:text-white">
-              {complete}/{total}
-            </p>
-          </div>
+        <SnapshotBanner isViewingSnapshot={!!selectedSnapshotId} />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
+          <PerspectivesDonutChart
+            perspectives={perspectives}
+            avgProgress={avgProgress}
+          />
+          <ProgressTrendChart trendData={trendData ?? []} />
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-2">
