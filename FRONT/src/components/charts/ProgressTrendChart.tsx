@@ -1,16 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
+import type { ReactNode } from "react";
 import {
-  ScatterChart,
-  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
   LineChart,
   Line,
 } from "recharts";
+import type { ValueType } from "recharts/types/component/DefaultTooltipContent";
 import type { ProgressTrendPoint } from "../../services/bscService";
 
 interface ProgressTrendChartProps {
@@ -86,7 +85,7 @@ export default function ProgressTrendChart({ trendData }: ProgressTrendChartProp
               tick={{ fontSize: 11, fill: textColor }}
               tickLine={false}
               axisLine={{ stroke: gridColor }}
-              tickFormatter={(v: number) => `${v}%`}
+              tickFormatter={(v: ValueType) => `${v}%`}
             />
             <Tooltip
               contentStyle={{
@@ -98,8 +97,8 @@ export default function ProgressTrendChart({ trendData }: ProgressTrendChartProp
                 boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
               }}
               labelStyle={{ color: isDark ? "#D1D5DB" : "#374151" }}
-              formatter={(value: number) => [`${value}%`, "Progreso"]}
-              labelFormatter={(label: string) => label}
+              formatter={(value: ValueType | undefined) => [`${value ?? 0}%`, "Progreso"]}
+              labelFormatter={(label: ReactNode): ReactNode => String(label ?? "")}
             />
             <Line
               type="monotone"

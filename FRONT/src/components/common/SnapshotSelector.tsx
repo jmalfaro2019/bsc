@@ -7,8 +7,8 @@ interface SnapshotSelectorProps {
   onSnapshotChange: (snapshotId: string | null) => void;
 }
 
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
+function formatDate(dateStr: string | Date): string {
+  const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
   return d.toLocaleDateString("es-CO", {
     year: "numeric",
     month: "short",
