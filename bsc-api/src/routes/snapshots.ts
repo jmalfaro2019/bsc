@@ -23,6 +23,38 @@ router.get("/", async (_req: AuthRequest, res: Response) => {
   res.json(snapshots);
 });
 
+type PerspectiveWithNested = {
+  weightage: number;
+  projects: Array<{
+    weightage: number;
+    activities: Array<{ id: string; progress: number }>;
+  }>;
+};
+
+function computeWeightedProgress(
+  perspectives: PerspectiveWithNested[],
+  progressMap?: Map<string, number>,
+): number {
+  const totalPerspectiveWeight = perspectives.reduce((s, p) => s + p.weightage, 0);
+  if (totalPerspectiveWeight === 0) return 0;
+
+  const globalProgress = perspectives.reduce((sum, persp) => {
+    const totalProjectWeight = persp.projects.reduce((s, p) => s + p.weightage, 0);
+    const perspProgress = totalProjectWeight === 0 ? 0 : persp.projects.reduce((pSum, project) => {
+      const projProgress = project.activities.length > 0
+        ? project.activities.reduce((aSum, act) => {
+            const prog = progressMap ? (progressMap.get(act.id) ?? act.progress) : act.progress;
+            return aSum + prog;
+          }, 0) / project.activities.length
+        : 0;
+      return pSum + projProgress * (project.weightage / totalProjectWeight);
+    }, 0);
+    return sum + perspProgress * (persp.weightage / totalPerspectiveWeight);
+  }, 0);
+
+  return Math.round(globalProgress * 10) / 10;
+}
+
 // GET /api/snapshots/progress-trend — aggregated progress per snapshot (for trend chart)
 router.get("/progress-trend", async (_req: AuthRequest, res: Response) => {
   const snapshots = await prisma.snapshot.findMany({
@@ -30,24 +62,25 @@ router.get("/progress-trend", async (_req: AuthRequest, res: Response) => {
     include: { progressRecords: true },
   });
 
-  const currentActivities = await prisma.activity.findMany();
+  const perspectives = await prisma.perspective.findMany({
+    orderBy: { order: "asc" },
+    include: {
+      projects: {
+        orderBy: { order: "asc" },
+        include: { activities: { orderBy: { order: "asc" } } },
+      },
+    },
+  });
 
   const trend = snapshots.map((snap) => {
     const progressMap = new Map(
       snap.progressRecords.map((r) => [r.activityId, r.progress]),
     );
-    const totalProgress = currentActivities.length > 0
-      ? currentActivities.reduce((sum, a) => {
-          const recorded = progressMap.get(a.id);
-          return sum + (recorded !== undefined ? recorded : a.progress);
-        }, 0) / currentActivities.length
-      : 0;
-
     return {
       id: snap.id,
       label: snap.label,
       date: snap.date.toISOString(),
-      avgProgress: Math.round(totalProgress * 10) / 10,
+      avgProgress: computeWeightedProgress(perspectives, progressMap),
     };
   });
 
@@ -55,11 +88,7 @@ router.get("/progress-trend", async (_req: AuthRequest, res: Response) => {
     id: "current",
     label: "Actual",
     date: new Date().toISOString(),
-    avgProgress: Math.round(
-      currentActivities.length > 0
-        ? (currentActivities.reduce((s, a) => s + a.progress, 0) / currentActivities.length) * 10
-        : 0,
-    ) / 10,
+    avgProgress: computeWeightedProgress(perspectives),
   });
 
   res.json(trend);

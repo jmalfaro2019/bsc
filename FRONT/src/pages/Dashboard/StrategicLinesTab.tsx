@@ -47,7 +47,13 @@ export default function StrategicLinesTab() {
     };
   });
 
-  const avgProgress = Math.round(perspectives.reduce((a, p) => a + p.progress, 0) / (perspectives.length || 1));
+  const totalPerspectiveWeightage = perspectives.reduce((a, p) => a + p.weightage, 0);
+  const avgProgress = Math.round(
+    perspectives.reduce(
+      (a, p) => a + p.progress * (p.weightage / (totalPerspectiveWeightage || 1)),
+      0,
+    ),
+  );
 
   return (
     <>
