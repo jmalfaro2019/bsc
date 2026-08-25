@@ -97,3 +97,36 @@ export const progressRecordSchema = z.object({
 export type Snapshot = z.infer<typeof snapshotSchema>;
 export type CreateSnapshot = z.infer<typeof createSnapshotSchema>;
 export type ProgressRecord = z.infer<typeof progressRecordSchema>;
+
+// Avance / AvanceItem schemas
+export const avanceItemSchema = z.object({
+  id: z.string(),
+  avanceId: z.string(),
+  activityId: z.string(),
+  progress: z.number().min(0).max(100),
+  description: z.string().nullable().optional(),
+  createdAt: z.string().or(z.date()),
+});
+
+export const createAvanceItemSchema = z.object({
+  activityId: z.string(),
+  progress: z.number().min(0).max(100),
+  description: z.string().optional(),
+});
+
+export const avanceSchema = z.object({
+  id: z.string(),
+  snapshotId: z.string().nullable().optional(),
+  date: z.string().or(z.date()),
+  createdAt: z.string().or(z.date()),
+  items: z.array(avanceItemSchema),
+});
+
+export const createAvanceSchema = z.object({
+  items: z.array(createAvanceItemSchema),
+});
+
+export type AvanceItem = z.infer<typeof avanceItemSchema>;
+export type CreateAvanceItem = z.infer<typeof createAvanceItemSchema>;
+export type Avance = z.infer<typeof avanceSchema>;
+export type CreateAvance = z.infer<typeof createAvanceSchema>;

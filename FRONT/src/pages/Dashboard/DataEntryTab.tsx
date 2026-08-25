@@ -3,8 +3,7 @@ import * as XLSX from "xlsx";
 import PageMeta from "../../components/common/PageMeta";
 import { ChevronDownIcon, BoxCubeIcon } from "../../icons";
 import { usePerspectives } from "../../hooks/usePerspectives";
-import { useUpdateProgress } from "../../hooks/useUpdateProgress";
-import { useBatchUpdateProgress } from "../../hooks/useBatchUpdateProgress";
+import { useCreateAvance } from "../../hooks/useCreateAvance";
 import { useCreateSnapshot } from "../../hooks/useSnapshots";
 import { getPerspectiveColors } from "../../utils/perspectiveColors";
 import type { Perspective } from "bsc-shared";
@@ -14,6 +13,7 @@ interface ImportRow {
   project: string;
   activity: string;
   progress: number;
+  description?: string;
 }
 
 interface PreviewRow {
@@ -23,6 +23,7 @@ interface PreviewRow {
   currentProgress: number;
   newProgress: number;
   activityId: string;
+  description: string;
   error?: string;
 }
 
@@ -66,6 +67,7 @@ function parseCSV(text: string): ImportRow[] {
   const prIdx = header.indexOf("proyecto");
   const aIdx = header.indexOf("actividad");
   const vIdx = header.indexOf("avance");
+  const dIdx = header.indexOf("descripción") !== -1 ? header.indexOf("descripción") : header.indexOf("descripcion");
   if (pIdx === -1 || prIdx === -1 || aIdx === -1 || vIdx === -1) return [];
   const rows: ImportRow[] = [];
   for (let i = 1; i < lines.length; i++) {
@@ -78,6 +80,7 @@ function parseCSV(text: string): ImportRow[] {
       project: cols[prIdx],
       activity: cols[aIdx],
       progress: Math.min(100, Math.max(0, progress)),
+      description: dIdx !== -1 && cols[dIdx] ? cols[dIdx] : undefined,
     });
   }
   return rows;
@@ -102,6 +105,7 @@ function parseExcel(buffer: ArrayBuffer): ImportRow[] {
     const project = findColumnValue(row, "proyecto");
     const activity = findColumnValue(row, "actividad");
     const progress = findColumnValue(row, "avance");
+    const description = findColumnValue(row, "descripción") ?? findColumnValue(row, "descripcion");
     if (!perspective || !project || !activity || progress === undefined) continue;
     const progressNum = parseFloat(String(progress));
     if (isNaN(progressNum)) continue;
@@ -110,6 +114,7 @@ function parseExcel(buffer: ArrayBuffer): ImportRow[] {
       project: String(project),
       activity: String(activity),
       progress: Math.min(100, Math.max(0, progressNum)),
+      description: description ? String(description) : undefined,
     });
   }
   return rows;
@@ -129,6 +134,7 @@ function matchImportRows(rows: ImportRow[], perspectives: Perspective[]): Previe
         currentProgress: 0,
         newProgress: row.progress,
         activityId: "",
+        description: row.description || "",
         error: `Perspectiva "${row.perspective}" no encontrada`,
       });
       continue;
@@ -144,6 +150,7 @@ function matchImportRows(rows: ImportRow[], perspectives: Perspective[]): Previe
         currentProgress: 0,
         newProgress: row.progress,
         activityId: "",
+        description: row.description || "",
         error: `Proyecto "${row.project}" no encontrado en "${foundPerspective.name}"`,
       });
       continue;
@@ -159,6 +166,7 @@ function matchImportRows(rows: ImportRow[], perspectives: Perspective[]): Previe
         currentProgress: 0,
         newProgress: row.progress,
         activityId: "",
+        description: row.description || "",
         error: `Actividad "${row.activity}" no encontrada en "${foundProject.name}"`,
       });
       continue;
@@ -170,6 +178,7 @@ function matchImportRows(rows: ImportRow[], perspectives: Perspective[]): Previe
       currentProgress: foundActivity.progress,
       newProgress: row.progress,
       activityId: foundActivity.id,
+      description: row.description || "",
     });
   }
   return preview;
@@ -185,14 +194,14 @@ function normalize(str: string): string {
 
 export default function DataEntryTab() {
   const { data, isLoading, error } = usePerspectives();
-  const updateProgress = useUpdateProgress();
-  const batchUpdate = useBatchUpdateProgress();
+  const createAvance = useCreateAvance();
   const createSnapshotMutation = useCreateSnapshot();
 
   const [selectedPerspective, setSelectedPerspective] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedActivity, setSelectedActivity] = useState("");
   const [progressValue, setProgressValue] = useState(0);
+  const [description, setDescription] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -255,16 +264,18 @@ export default function DataEntryTab() {
       return;
     }
     setValidationErrors([]);
-    updateProgress.mutate(
-      {
-        perspectiveId: selectedPerspective,
-        projectId: selectedProject,
-        activityId: selectedActivity,
-        progress: progressValue,
-      },
+    createAvance.mutate(
+      [
+        {
+          activityId: selectedActivity,
+          progress: progressValue,
+          description: description.trim() || undefined,
+        },
+      ],
       {
         onSuccess: () => {
           setShowSuccess(true);
+          setDescription("");
           setTimeout(() => setShowSuccess(false), 3000);
         },
       },
@@ -280,6 +291,7 @@ export default function DataEntryTab() {
           proyecto: project.name,
           actividad: activity.name,
           avance: activity.progress,
+          descripción: "",
         })),
       ),
     );
@@ -358,8 +370,12 @@ export default function DataEntryTab() {
     if (!importPreview) return;
     const validRows = importPreview.filter((r) => !r.error);
     if (validRows.length === 0) return;
-    batchUpdate.mutate(
-      validRows.map((r) => ({ activityId: r.activityId, progress: r.newProgress })),
+    createAvance.mutate(
+      validRows.map((r) => ({
+        activityId: r.activityId,
+        progress: r.newProgress,
+        description: r.description.trim() || undefined,
+      })),
       {
         onSuccess: () => {
           setImportSuccess(true);
@@ -374,6 +390,15 @@ export default function DataEntryTab() {
     setImportPreview(null);
     setImportError(null);
     setImportSuccess(false);
+  };
+
+  const handleDescriptionChange = (index: number, value: string) => {
+    if (!importPreview) return;
+    setImportPreview(
+      importPreview.map((row, i) =>
+        i === index ? { ...row, description: value } : row,
+      ),
+    );
   };
 
   if (isLoading) {
@@ -543,18 +568,35 @@ export default function DataEntryTab() {
                 </div>
               </div>
 
+              <div
+                className={`space-y-1.5 pt-2 transition-all duration-300 ${
+                  !selectedActivity ? "opacity-40 pointer-events-none" : "opacity-100"
+                }`}
+              >
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Descripción (opcional)
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describa el avance realizado..."
+                  rows={2}
+                  className="w-full appearance-none rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 px-4 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 dark:focus:border-brand-400 transition-all resize-none"
+                />
+              </div>
+
               <div className="pt-4">
                 <button
                   onClick={handleUpdate}
-                  disabled={!selectedPerspective || updateProgress.isPending}
+                  disabled={!selectedPerspective || createAvance.isPending}
                   className={`w-full flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 font-semibold text-white transition-all duration-200 ${
-                    !selectedPerspective || updateProgress.isPending
+                    !selectedPerspective || createAvance.isPending
                       ? "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
                       : "bg-brand-500 hover:bg-brand-600 active:scale-[0.98]"
                   }`}
                 >
                   <BoxCubeIcon className="w-4 h-4" />
-                  {updateProgress.isPending ? "Guardando..." : "Actualizar Avance"}
+                  {createAvance.isPending ? "Guardando..." : "Actualizar Avance"}
                 </button>
               </div>
 
@@ -574,7 +616,7 @@ export default function DataEntryTab() {
                 </div>
               )}
 
-              {updateProgress.isError && (
+              {createAvance.isError && (
                 <div className="rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
                   <p className="text-sm font-medium text-red-800 dark:text-red-300">
@@ -651,7 +693,7 @@ export default function DataEntryTab() {
                 </div>
               )}
 
-              {batchUpdate.isError && (
+              {createAvance.isError && (
                 <div className="rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
                   <p className="text-sm font-medium text-red-800 dark:text-red-300">
@@ -680,6 +722,9 @@ export default function DataEntryTab() {
                           </th>
                           <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 uppercase text-xs tracking-wider">
                             Nuevo avance
+                          </th>
+                          <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 uppercase text-xs tracking-wider">
+                            Descripción
                           </th>
                           <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 uppercase text-xs tracking-wider">
                             Estado
@@ -723,6 +768,23 @@ export default function DataEntryTab() {
                             </td>
                             <td className="px-4 py-2.5">
                               {row.error ? (
+                                <input
+                                  type="text"
+                                  disabled
+                                  className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 text-xs text-gray-400"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={row.description}
+                                  onChange={(e) => handleDescriptionChange(i, e.target.value)}
+                                  placeholder="Añadir descripción..."
+                                  className="w-full min-w-[160px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 dark:focus:border-brand-400 transition-all"
+                                />
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {row.error ? (
                                 <span className="text-xs font-medium text-red-600 dark:text-red-400">
                                   {row.error}
                                 </span>
@@ -744,14 +806,14 @@ export default function DataEntryTab() {
                   <div className="flex gap-3">
                     <button
                       onClick={handleApplyBatch}
-                      disabled={hasImportErrors || batchUpdate.isPending}
+                      disabled={hasImportErrors || createAvance.isPending}
                       className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold text-white transition-all duration-200 ${
-                        hasImportErrors || batchUpdate.isPending
+                        hasImportErrors || createAvance.isPending
                           ? "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
                           : "bg-brand-500 hover:bg-brand-600 active:scale-[0.98]"
                       }`}
                     >
-                      {batchUpdate.isPending ? "Aplicando..." : "Aplicar cambios"}
+                      {createAvance.isPending ? "Aplicando..." : "Aplicar cambios"}
                     </button>
                     <button
                       onClick={handleCancelImport}

@@ -136,6 +136,11 @@ router.post(
         });
       }
 
+      await tx.avance.updateMany({
+        where: { snapshotId: null },
+        data: { snapshotId: snap.id },
+      });
+
       return snap;
     });
 

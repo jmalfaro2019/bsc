@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import authRoutes from "./routes/auth";
 import perspectiveRoutes from "./routes/perspectives";
 import snapshotRoutes from "./routes/snapshots";
+import avanceRoutes from "./routes/avances";
 import { errorHandler } from "./middleware/errorHandler";
 
 export const prisma = new PrismaClient();
@@ -23,6 +24,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/perspectives", perspectiveRoutes);
 app.use("/api/snapshots", snapshotRoutes);
+app.use("/api/avances", avanceRoutes);
 
 app.use(errorHandler);
 

@@ -66,6 +66,7 @@ model Activity {
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   progressRecords ProgressRecord[]
+  avanceItems     AvanceItem[]
 
   @@map("activities")
 }
@@ -92,6 +93,32 @@ model Snapshot {
   createdAt DateTime @default(now()) @map("created_at")
 
   progressRecords ProgressRecord[]
+  avances         Avance[]
 
   @@map("snapshots")
+}
+
+model Avance {
+  id         String       @id @default(cuid())
+  snapshotId String?      @map("snapshot_id")
+  snapshot   Snapshot?    @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+  date       DateTime     @default(now())
+  createdAt  DateTime     @default(now()) @map("created_at")
+  items      AvanceItem[]
+
+  @@map("avances")
+}
+
+model AvanceItem {
+  id          String   @id @default(cuid())
+  avanceId    String   @map("avance_id")
+  avance      Avance   @relation(fields: [avanceId], references: [id], onDelete: Cascade)
+  activityId  String   @map("activity_id")
+  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  progress    Float
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([avanceId])
+  @@map("avance_items")
 }
