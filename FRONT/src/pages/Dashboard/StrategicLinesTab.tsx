@@ -5,6 +5,7 @@ import StrategicCard from "../../components/Cards/StrategicCard";
 import PageMeta from "../../components/common/PageMeta";
 import SnapshotSelector from "../../components/common/SnapshotSelector";
 import SnapshotBanner from "../../components/common/SnapshotBanner";
+import UpdatesHistory from "../../components/common/UpdatesHistory";
 import { usePerspectives } from "../../hooks/usePerspectives";
 import { useProgressTrend } from "../../hooks/useSnapshots";
 
@@ -86,6 +87,14 @@ export default function StrategicLinesTab() {
             avgProgress={avgProgress}
           />
           <ProgressTrendChart trendData={trendData ?? []} />
+        </div>
+
+        <div className="mb-8">
+          <UpdatesHistory
+            key={selectedSnapshotId ?? "current"}
+            perspectives={data.perspectives}
+            snapshotId={selectedSnapshotId}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-2">

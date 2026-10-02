@@ -58,11 +58,12 @@ router.post(
   },
 );
 
-// GET /api/avances — list all avances (newest first), optional ?snapshotId=
+// GET /api/avances — list all avances (newest first), optional ?snapshotId= or ?current=true
 router.get("/", async (req: AuthRequest, res: Response) => {
   const snapshotId = req.query.snapshotId as string | undefined;
+  const current = req.query.current === "true";
   const avances = await prisma.avance.findMany({
-    where: snapshotId ? { snapshotId } : undefined,
+    where: snapshotId ? { snapshotId } : current ? { snapshotId: null } : undefined,
     orderBy: { date: "desc" },
     include: {
       items: {

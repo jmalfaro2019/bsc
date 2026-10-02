@@ -16,6 +16,7 @@ export function useCreateSnapshot() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["snapshots"] });
       queryClient.invalidateQueries({ queryKey: ["progressTrend"] });
+      queryClient.invalidateQueries({ queryKey: ["avances"] });
     },
   });
 }
@@ -28,6 +29,7 @@ export function useDeleteSnapshot() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["snapshots"] });
       queryClient.invalidateQueries({ queryKey: ["progressTrend"] });
+      queryClient.invalidateQueries({ queryKey: ["avances"] });
     },
   });
 }

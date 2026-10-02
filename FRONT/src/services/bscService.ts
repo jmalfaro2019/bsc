@@ -1,5 +1,5 @@
 import api from "./api";
-import type { BSCData, Perspective, Project, Activity, Snapshot, Avance } from "../types/bsc";
+import type { BSCData, Perspective, Project, Activity, Snapshot, Avance, AvanceItem } from "../types/bsc";
 
 const PERSPECTIVES_KEY = "/perspectives";
 const SNAPSHOTS_KEY = "/snapshots";
@@ -162,11 +162,19 @@ export async function createAvance(
   return data;
 }
 
-export async function fetchAvances(snapshotId?: string): Promise<Avance[]> {
+export interface AvanceItemWithActivity extends AvanceItem {
+  activity: { id: string; name: string } | null;
+}
+
+export interface AvanceWithItems extends Omit<Avance, "items"> {
+  items: AvanceItemWithActivity[];
+}
+
+export async function fetchAvances(snapshotId?: string | null): Promise<AvanceWithItems[]> {
   const url = snapshotId
     ? `${AVANCES_KEY}?snapshotId=${snapshotId}`
-    : AVANCES_KEY;
-  const { data } = await api.get<Avance[]>(url);
+    : `${AVANCES_KEY}?current=true`;
+  const { data } = await api.get<AvanceWithItems[]>(url);
   return data;
 }
 
