@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router";
 import ComponentProjectsCard from "../../components/Cards/ComponentProjectsCard";
 import PageMeta from "../../components/common/PageMeta";
+import QueryState from "../../components/common/QueryState";
 import SnapshotSelector from "../../components/common/SnapshotSelector";
 import SnapshotBanner from "../../components/common/SnapshotBanner";
 import { ChevronDownIcon } from "../../icons";
@@ -84,22 +85,11 @@ export default function ProjectsTab() {
   const [searchParams] = useSearchParams();
   const expandId = searchParams.get("expand");
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (error || !data) {
-    return <div className="p-8 text-center text-red-500">Error cargando datos</div>;
-  }
-
-  const totalActivities = data.perspectives.reduce(
-    (acc, p) => acc + p.projects.reduce((a, proj) => a + proj.activities.length, 0),
-    0
-  );
+  const totalActivities =
+    data?.perspectives.reduce(
+      (acc, p) => acc + p.projects.reduce((a, proj) => a + proj.activities.length, 0),
+      0
+    ) ?? 0;
 
   return (
     <>
@@ -109,32 +99,38 @@ export default function ProjectsTab() {
       />
 
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Proyectos por Perspectiva
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {data.perspectives.length} perspectivas · {totalActivities} actividades en total
-            </p>
-          </div>
-          <SnapshotSelector
-            selectedSnapshotId={selectedSnapshotId}
-            onSnapshotChange={setSelectedSnapshotId}
-          />
-        </div>
+        <QueryState isLoading={isLoading} isError={Boolean(error) || !data}>
+          {data && (
+            <>
+              <div className="mb-8 flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Proyectos por Perspectiva
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {data.perspectives.length} perspectivas · {totalActivities} actividades en total
+                  </p>
+                </div>
+                <SnapshotSelector
+                  selectedSnapshotId={selectedSnapshotId}
+                  onSnapshotChange={setSelectedSnapshotId}
+                />
+              </div>
 
-        <SnapshotBanner isViewingSnapshot={!!selectedSnapshotId} />
+              <SnapshotBanner isViewingSnapshot={!!selectedSnapshotId} />
 
-        <div className="flex flex-col gap-5">
-          {data.perspectives.map((perspective) => (
-            <PerspectiveSection
-              key={perspective.id}
-              perspective={perspective}
-              defaultExpanded={!expandId || perspective.id === expandId}
-            />
-          ))}
-        </div>
+              <div className="flex flex-col gap-5">
+                {data.perspectives.map((perspective) => (
+                  <PerspectiveSection
+                    key={perspective.id}
+                    perspective={perspective}
+                    defaultExpanded={!expandId || perspective.id === expandId}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </QueryState>
       </div>
     </>
   );

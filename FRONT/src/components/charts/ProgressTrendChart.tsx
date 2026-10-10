@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import type { ReactNode } from "react";
 import {
   XAxis,
@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { ValueType } from "recharts/types/component/DefaultTooltipContent";
 import type { ProgressTrendPoint } from "../../services/bscService";
+import { useChartTheme } from "../../hooks/useChartTheme";
 
 interface ProgressTrendChartProps {
   trendData: ProgressTrendPoint[];
@@ -22,19 +23,7 @@ function formatXAxis(dateStr: string): string {
 }
 
 export default function ProgressTrendChart({ trendData }: ProgressTrendChartProps) {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    setIsDark(document.documentElement.classList.contains("dark"));
-    return () => observer.disconnect();
-  }, []);
+  const { isDark } = useChartTheme();
 
   const textColor = isDark ? "#9CA3AF" : "#6B7280";
   const gridColor = isDark ? "#374151" : "#E5E7EB";

@@ -6,9 +6,12 @@ import {
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
+  PageIcon,
   TableIcon,
+  UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
+import { useAuth } from "../context/AuthContext";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -43,9 +46,27 @@ const othersItems: NavItem[] = [
   },
 ];
 
+const adminItems: NavItem[] = [
+  {
+    icon: <PageIcon />,
+    name: "Estructura",
+    path: "/admin/estructura",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Usuarios",
+    path: "/admin/usuarios",
+  },
+];
+
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isAdmin } = useAuth();
   const location = useLocation();
+
+  const visibleOthersItems = isAdmin
+    ? othersItems
+    : othersItems.filter((item) => item.path !== "/ingreso-datos");
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -272,7 +293,7 @@ const AppSidebar: React.FC = () => {
               {renderMenuItems(navItems, "main")}
             </div>
 
-            {othersItems.length > 0 && (
+            {visibleOthersItems.length > 0 && (
               <div>
                 <h2
                   className={`mb-3 text-[11px] uppercase tracking-widest font-semibold flex leading-[20px] text-gray-400 dark:text-gray-500 ${
@@ -287,7 +308,26 @@ const AppSidebar: React.FC = () => {
                     <HorizontaLDots className="size-5" />
                   )}
                 </h2>
-                {renderMenuItems(othersItems, "others")}
+                {renderMenuItems(visibleOthersItems, "others")}
+              </div>
+            )}
+
+            {isAdmin && (
+              <div>
+                <h2
+                  className={`mb-3 text-[11px] uppercase tracking-widest font-semibold flex leading-[20px] text-gray-400 dark:text-gray-500 ${
+                    !isExpanded && !isHovered
+                      ? "lg:justify-center"
+                      : "justify-start"
+                  }`}
+                >
+                  {isExpanded || isHovered || isMobileOpen ? (
+                    "Administración"
+                  ) : (
+                    <HorizontaLDots className="size-5" />
+                  )}
+                </h2>
+                {renderMenuItems(adminItems, "others")}
               </div>
             )}
           </div>

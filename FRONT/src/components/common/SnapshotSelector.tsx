@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDownIcon, CalenderIcon, TrashBinIcon } from "../../icons";
 import { useSnapshots, useDeleteSnapshot } from "../../hooks/useSnapshots";
+import { useAuth } from "../../context/AuthContext";
 
 interface SnapshotSelectorProps {
   selectedSnapshotId: string | null;
@@ -22,6 +23,7 @@ export default function SnapshotSelector({
 }: SnapshotSelectorProps) {
   const { data: snapshots, isLoading } = useSnapshots();
   const deleteSnapshot = useDeleteSnapshot();
+  const { isAdmin } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -113,17 +115,19 @@ export default function SnapshotSelector({
                       {formatDate(snapshot.date)}
                     </span>
                   </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDelete(snapshot.id); }}
-                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${
-                      confirmDeleteId === snapshot.id
-                        ? "bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/30"
-                        : "text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    }`}
-                    title={confirmDeleteId === snapshot.id ? "Confirmar eliminación" : "Eliminar corte"}
-                  >
-                    <TrashBinIcon className="w-3.5 h-3.5" />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(snapshot.id); }}
+                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${
+                        confirmDeleteId === snapshot.id
+                          ? "bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/30"
+                          : "text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                      title={confirmDeleteId === snapshot.id ? "Confirmar eliminación" : "Eliminar corte"}
+                    >
+                      <TrashBinIcon className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               ))}
 

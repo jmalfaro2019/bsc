@@ -9,6 +9,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
+        isAdmin: user?.role === "admin",
         login,
         logout,
       }}

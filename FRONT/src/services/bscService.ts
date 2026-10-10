@@ -120,15 +120,6 @@ export async function deleteActivity(
   );
 }
 
-export async function batchUpdateProgress(
-  updates: { activityId: string; progress: number }[],
-): Promise<{ updated: Activity[] }> {
-  const { data } = await api.patch(`${PERSPECTIVES_KEY}/batch-progress`, {
-    updates,
-  });
-  return data;
-}
-
 export async function fetchSnapshots(): Promise<Snapshot[]> {
   const { data } = await api.get<Snapshot[]>(SNAPSHOTS_KEY);
   return data;

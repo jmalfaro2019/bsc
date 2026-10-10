@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PageMeta from "../components/common/PageMeta";
+import QueryState from "../components/common/QueryState";
 import SnapshotSelector from "../components/common/SnapshotSelector";
 import SnapshotBanner from "../components/common/SnapshotBanner";
 import { ChevronDownIcon } from "../icons";
@@ -134,26 +135,12 @@ export default function WeightingsPage() {
   const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null);
   const { data, isLoading, error } = usePerspectives(selectedSnapshotId ?? undefined);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (error || !data) {
-    return <div className="p-8 text-center text-red-500">Error cargando datos</div>;
-  }
-
-  const totalActivities = data.perspectives.reduce(
-    (a, l) => a + l.projects.reduce((b, p) => b + p.activities.length, 0),
-    0
-  );
-  const totalProjects = data.perspectives.reduce(
-    (a, l) => a + l.projects.length,
-    0
-  );
+  const totalActivities =
+    data?.perspectives.reduce(
+      (a, l) => a + l.projects.reduce((b, p) => b + p.activities.length, 0),
+      0
+    ) ?? 0;
+  const totalProjects = data?.perspectives.reduce((a, l) => a + l.projects.length, 0) ?? 0;
 
   return (
     <>
@@ -163,28 +150,34 @@ export default function WeightingsPage() {
       />
 
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Tabla de Ponderaciones
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {data.perspectives.length} perspectivas · {totalProjects} proyectos · {totalActivities} actividades
-            </p>
-          </div>
-          <SnapshotSelector
-            selectedSnapshotId={selectedSnapshotId}
-            onSnapshotChange={setSelectedSnapshotId}
-          />
-        </div>
+        <QueryState isLoading={isLoading} isError={Boolean(error) || !data}>
+          {data && (
+            <>
+              <div className="mb-8 flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Tabla de Ponderaciones
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {data.perspectives.length} perspectivas · {totalProjects} proyectos · {totalActivities} actividades
+                  </p>
+                </div>
+                <SnapshotSelector
+                  selectedSnapshotId={selectedSnapshotId}
+                  onSnapshotChange={setSelectedSnapshotId}
+                />
+              </div>
 
-        <SnapshotBanner isViewingSnapshot={!!selectedSnapshotId} />
+              <SnapshotBanner isViewingSnapshot={!!selectedSnapshotId} />
 
-        <div className="flex flex-col gap-5">
-          {data.perspectives.map((line) => (
-            <LineSection key={line.id} line={line} />
-          ))}
-        </div>
+              <div className="flex flex-col gap-5">
+                {data.perspectives.map((line) => (
+                  <LineSection key={line.id} line={line} />
+                ))}
+              </div>
+            </>
+          )}
+        </QueryState>
       </div>
     </>
   );

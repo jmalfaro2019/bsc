@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import {
   PieChart,
   Pie,
@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { getPerspectiveColors } from "../../utils/perspectiveColors";
+import { useChartTheme } from "../../hooks/useChartTheme";
 
 interface PerspectiveData {
   id: string;
@@ -26,19 +27,7 @@ export default function PerspectivesDonutChart({
   perspectives,
   avgProgress,
 }: PerspectivesDonutChartProps) {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    setIsDark(document.documentElement.classList.contains("dark"));
-    return () => observer.disconnect();
-  }, []);
+  const { isDark } = useChartTheme();
 
   const trackColor = isDark ? "#374151" : "#E4E7EC";
 

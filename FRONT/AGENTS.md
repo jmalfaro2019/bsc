@@ -23,22 +23,26 @@ No test runner is configured. No test files exist in the repo.
   - `/` — Strategic Lines tab
   - `/proyectos` — Projects tab
   - `/acciones` — Actions tab
-  - `/ingreso-datos` — Data Entry tab
+  - `/ingreso-datos` — Data Entry tab (admin only via `RequireRole`)
   - `/ponderaciones` — Weightings page
+  - `/admin/estructura` — Structure CRUD (admin only via `RequireRole`)
+  - `/admin/usuarios` — User management (admin only via `RequireRole`)
   - `/signin` — Login page (public)
 
 ## Data flow
 
 - **API client**: `src/services/api.ts` — axios instance with JWT interceptor and auto-refresh on 401
-- **Service layer**: `src/services/bscService.ts` (CRUD) + `src/services/authService.ts` (login/logout/refresh)
-- **Server state**: TanStack Query via custom hooks (`src/hooks/usePerspectives.ts`, `src/hooks/useUpdateProgress.ts`)
-- **Auth state**: `src/context/AuthContext.tsx` — stores user in localStorage (token, refreshToken, username, role)
+- **Service layer**: `src/services/bscService.ts` (structure CRUD, progress, snapshots, avances) + `src/services/authService.ts` (login/logout/refresh) + `src/services/userService.ts` (users, admin)
+- **Server state**: TanStack Query via custom hooks in `src/hooks/` (`usePerspectives`, `useStructureCrud`, `useUsers`, `useSnapshots`, `useAvances`, `useCreateAvance`)
+- **Shared components**: `QueryState` (loading/error), `Alert` (error/success/warning), `useChartTheme` (dark-mode detection for Recharts)
+- **Utils**: `src/utils/` — `importRows.ts` (CSV/Excel parsing + matching), `perspectiveColors.ts`, `apiError.ts`
+- **Auth state**: `src/context/AuthContext.tsx` — stores user in localStorage (token, refreshToken, username, role) and exposes `isAdmin`
 - **Types**: Re-exported from `bsc-shared` via `src/types/bsc.ts`
-- **Backend**: All data comes from the REST API at `/api/perspectives/**` (see `bsc-api/`). No local JSON data source.
+- **Backend**: All data comes from the REST API (`/api/perspectives/**`, `/api/snapshots/**`, `/api/avances/**`, `/api/users/**`; see `bsc-api/`). No local JSON data source.
 
 ## Key patterns
 
-- **Auth**: `AuthProvider` wraps the entire app. `ProtectedRoute` component guards dashboard routes. Tokens in `localStorage`. Axios interceptor auto-refreshes expired JWT tokens and queues concurrent requests.
+- **Auth**: `AuthProvider` wraps the entire app. `ProtectedRoute` component guards dashboard routes; `RequireRole` gates admin-only routes. Tokens in `localStorage`. Axios interceptor auto-refreshes expired JWT tokens and queues concurrent requests.
 - **Theme**: Dark mode via `ThemeContext.tsx` toggling `.dark` class on `<html>`. Tailwind v4 `@custom-variant dark (&:is(.dark *))` pattern.
 - **SVGs**: Import as `?react` named export (`vite-plugin-svgr` configured in `vite.config.ts`). See `src/svg.d.ts` for the type declaration.
 - **Icons**: `src/icons/index.ts` — barrel export for all SVG icon components.
@@ -64,3 +68,8 @@ Typecheck is part of `build` only. There is no separate `typecheck` script.
 
 - **API server must be running** on port 3000 for the app to function. Vite proxies `/api` requests to `http://localhost:3000` (see `vite.config.ts`).
 - **Auth required**: Default seed creates `admin` / `admin123`. Login at `/signin`.
+
+## Pending work
+
+- **xlsx is installed from the SheetJS CDN tarball** (`https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`) because the npm registry version (0.18.5) has unfixed prototype-pollution/ReDoS advisories. Do not reinstall from npm; upgrades require updating the tarball URL manually.
+- **Migrate Excel import/export to exceljs** (`importRows.ts`, `ImportCard.tsx`) to return to a fully npm-registry dependency. Note: exceljs does not support legacy `.xls` files.

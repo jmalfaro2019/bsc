@@ -130,3 +130,78 @@ export type AvanceItem = z.infer<typeof avanceItemSchema>;
 export type CreateAvanceItem = z.infer<typeof createAvanceItemSchema>;
 export type Avance = z.infer<typeof avanceSchema>;
 export type CreateAvance = z.infer<typeof createAvanceSchema>;
+
+// User / role schemas
+export const roleSchema = z.enum(["admin", "lector"]);
+
+export const userSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  role: roleSchema,
+  createdAt: z.string().or(z.date()),
+});
+
+export const createUserSchema = z.object({
+  username: z.string().min(3).max(50),
+  password: z.string().min(6).max(100),
+  role: roleSchema,
+});
+
+export const updateUserSchema = z.object({
+  username: z.string().min(3).max(50).optional(),
+  password: z.string().min(6).max(100).optional(),
+  role: roleSchema.optional(),
+});
+
+export type Role = z.infer<typeof roleSchema>;
+export type User = z.infer<typeof userSchema>;
+export type CreateUser = z.infer<typeof createUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
+
+// Weighted progress computation (single source of truth for backend and frontend)
+export interface WeightedProgressPerspective {
+  weightage: number;
+  projects: Array<{
+    weightage: number;
+    activities: Array<{ id: string; progress: number }>;
+  }>;
+}
+
+export function computePerspectiveProgress(
+  perspective: Omit<WeightedProgressPerspective, "weightage">,
+  progressMap?: Map<string, number>,
+): number {
+  const totalProjectWeight = perspective.projects.reduce((s, p) => s + p.weightage, 0);
+  if (totalProjectWeight === 0) return 0;
+
+  return perspective.projects.reduce((pSum, project) => {
+    const projProgress =
+      project.activities.length > 0
+        ? project.activities.reduce((aSum, act) => {
+            const prog = progressMap
+              ? (progressMap.get(act.id) ?? act.progress)
+              : act.progress;
+            return aSum + prog;
+          }, 0) / project.activities.length
+        : 0;
+    return pSum + projProgress * (project.weightage / totalProjectWeight);
+  }, 0);
+}
+
+export function computeWeightedProgress(
+  perspectives: WeightedProgressPerspective[],
+  progressMap?: Map<string, number>,
+): number {
+  const totalPerspectiveWeight = perspectives.reduce((s, p) => s + p.weightage, 0);
+  if (totalPerspectiveWeight === 0) return 0;
+
+  const globalProgress = perspectives.reduce(
+    (sum, persp) =>
+      sum +
+      computePerspectiveProgress(persp, progressMap) *
+        (persp.weightage / totalPerspectiveWeight),
+    0,
+  );
+
+  return Math.round(globalProgress * 10) / 10;
+}

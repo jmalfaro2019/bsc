@@ -15,6 +15,14 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: ["bsc-shared"],
+  },
+  build: {
+    commonjsOptions: {
+      include: [/node_modules/, /bsc-shared/],
+    },
+  },
   server: {
     proxy: {
       "/api": {

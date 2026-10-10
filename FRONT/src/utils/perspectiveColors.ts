@@ -78,10 +78,25 @@ const perspectiveColors: Record<PerspectiveId, PerspectiveColorSet> = {
   },
 };
 
+const fallbackOrder: PerspectiveId[] = [
+  "financiero",
+  "asociados-social-comercial",
+  "procesos-internos",
+  "aprendizaje",
+];
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
 export function getPerspectiveColors(id: string): PerspectiveColorSet {
-  return (
-    perspectiveColors[id as PerspectiveId] ?? perspectiveColors.financiero
-  );
+  const direct = perspectiveColors[id as PerspectiveId];
+  if (direct) return direct;
+  return perspectiveColors[fallbackOrder[hashString(id) % fallbackOrder.length]];
 }
 
 export function getProgressColor(progress: number): {
