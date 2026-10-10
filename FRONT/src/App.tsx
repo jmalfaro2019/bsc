@@ -14,6 +14,9 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RequireRole from "./components/auth/RequireRole";
 
+const showAdminStructure =
+  import.meta.env.VITE_SHOW_ADMIN_STRUCTURE === "true";
+
 export default function App() {
   return (
     <AuthProvider>
@@ -41,14 +44,16 @@ export default function App() {
               }
             />
             <Route path="/ponderaciones" element={<WeightingsPage />} />
-            <Route
-              path="/admin/estructura"
-              element={
-                <RequireRole role="admin">
-                  <StructurePage />
-                </RequireRole>
-              }
-            />
+            {showAdminStructure && (
+              <Route
+                path="/admin/estructura"
+                element={
+                  <RequireRole role="admin">
+                    <StructurePage />
+                  </RequireRole>
+                }
+              />
+            )}
             <Route
               path="/admin/usuarios"
               element={

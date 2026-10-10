@@ -19,6 +19,13 @@ bsc-shared  ←  FRONT      (via "file:../bsc-shared" in package.json)
 
 **After editing `bsc-shared/src/index.ts`, you must run `npm run build` inside `bsc-shared/` before dependent projects will see the change.**
 
+## Git workflow
+
+- `main` — production. Protected branch: no direct pushes, only PR merges. Vercel auto-deploys FRONT from here; Render deploys bsc-api.
+- `dev` — integration/testing branch. All development lands here first (via `feature/*` branches or direct commits) and is tested locally / with Vercel preview deployments before reaching `main`.
+- Flow: `feature/*` → `dev` → test → PR `dev` → `main` → production deploy. Do not commit directly to `main`.
+- **Feature flags for prod-hidden features**: some in-review UI is gated by env vars (e.g. `VITE_SHOW_ADMIN_STRUCTURE` hides the `/admin/estructura` tab in production). Unset/false in Vercel Production; set to `true` in Vercel Preview and in `FRONT/.env.development` for local dev. See `FRONT/.env.example`.
+
 ## Startup order (local dev)
 
 1. **PostgreSQL** — `docker compose up -d` (inside `bsc-api/`)
