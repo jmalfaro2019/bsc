@@ -25,7 +25,7 @@ No test runner is configured. No test files exist in the repo.
   - `/acciones` — Actions tab
   - `/ingreso-datos` — Data Entry tab (admin only via `RequireRole`)
   - `/ponderaciones` — Weightings page
-  - `/admin/estructura` — Structure CRUD (admin only via `RequireRole`)
+  - `/admin/estructura` — Structure CRUD (admin only via `RequireRole`; hidden unless `VITE_SHOW_ADMIN_STRUCTURE=true` — off in production until validations are added, see `.env.example`)
   - `/admin/usuarios` — User management (admin only via `RequireRole`)
   - `/signin` — Login page (public)
 

@@ -46,12 +46,19 @@ const othersItems: NavItem[] = [
   },
 ];
 
+const showAdminStructure =
+  import.meta.env.VITE_SHOW_ADMIN_STRUCTURE === "true";
+
 const adminItems: NavItem[] = [
-  {
-    icon: <PageIcon />,
-    name: "Estructura",
-    path: "/admin/estructura",
-  },
+  ...(showAdminStructure
+    ? [
+        {
+          icon: <PageIcon />,
+          name: "Estructura",
+          path: "/admin/estructura",
+        },
+      ]
+    : []),
   {
     icon: <UserCircleIcon />,
     name: "Usuarios",
